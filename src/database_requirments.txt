@@ -1,0 +1,16 @@
+//first table
+CREATE TABLE rooms (
+    room_id INT AUTO_INCREMENT PRIMARY KEY,
+    hour_rate INT NOT NULL,
+    availability TINYINT(1) DEFAULT 1,
+    ACtype VARCHAR(7) DEFAULT 'non AC'
+);
+
+// Second table
+CREATE TABLE users (
+    cust_id INT AUTO_INCREMENT PRIMARY KEY,
+    cust_name VARCHAR(30),
+    roomTakeTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    room_id INT NOT NULL,
+    FOREIGN KEY (room_id) REFERENCES rooms(room_id)
+);
