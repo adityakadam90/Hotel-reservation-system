@@ -3,6 +3,7 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class hotel_code {
+    public static final String hotelPassword = "shiv0921";
     public static void main(String args[]) {
         String url = "jdbc:mysql://localhost:3306/hotel_system";
         String password = "@#aditya2006";
@@ -17,19 +18,24 @@ public class hotel_code {
         try {
             Connection cn = DriverManager.getConnection(url,username,password);
             System.out.println();
-            System.out.println("|--------------------------------------------|");
-            System.out.println("|         Welcome to Shivtej Hotel           | ");
-            System.out.println("|--------------------------------------------|");
             while(true) {
                 System.out.println();
-                System.out.println("1.Book the room.\n2.return a room.\n3.exit.\nenter your choice : ");
+                System.out.println("|--------------------------------------------|");
+                System.out.println("|         Welcome to Shivtej Hotel           | ");
+                System.out.println("|--------------------------------------------|");
+                System.out.println();
+                System.out.println("1.Book the room.\n2.return a room.\n3.show all rooms.\n4.allocate new rooms.\n5.exit.\nenter task choice : ");
                 int ch = sc.nextInt();
                 switch (ch) {
                     case 1:Booking(cn,sc);
                     break;
                     case 2:returnRoom(cn,sc);
                     break;
-                    case 3:return;
+                    case 3:showACRooms(cn);showNonACRooms(cn);
+                    break;
+                    case 4:allocateNewRooms(cn,sc);
+                    break;
+                    case 5:return;
                 }
             }
 
@@ -37,25 +43,56 @@ public class hotel_code {
             System.out.println("error at connection ........!");
         }
     }
+    public static void allocateNewRooms(Connection cn,Scanner sc) {
+        System.out.println();
+        System.out.println("This section only for special staff....!");
+        System.out.print("enter the access password of hotel : ");
+        String accessPass = sc.next();
+        if(accessPass.equals(hotelPassword)) {
+            System.out.println();
+            System.out.println("Welcome Sir.........");
+            System.out.print("enter type of room : ");
+            String typeroom = sc.next();
+            System.out.print("enter hour rate for room : ");
+            int hour_rate = sc.nextInt();
+            String q = "insert into rooms(hour_rate,ACtype) values (?,?);";
+            try {
+                PreparedStatement ps = cn.prepareStatement(q);
+                ps.setInt(1,hour_rate);
+                ps.setString(2,typeroom);
+                int afr = ps.executeUpdate();
+                if(afr > 0) {
+                    System.out.println("Rooms succesfully Allocated.....|");
+                }else {
+                    System.out.println("such Wrong......!");
+                }
+            }catch (SQLException e) {
+                System.out.println("error at allocating new rooms............!");
+            }
+        }else {
+            System.out.println("Wrong access pin..........!!");
+        }
+    }
     public static void Booking(Connection cn,Scanner sc) {
         System.out.println();
         System.out.println("*********** Welcome to Booking rooms Section ********");
         System.out.println();
-        System.out.println("enter your name : ");
+        System.out.print("enter customer name : ");
         String name = sc.next();
-        System.out.println("what type of room you book (AC/NON) : ");
+        System.out.print("what type of room customer book (AC/NON) : ");
         String type = sc.next();
-        if(type == "AC") {
+        System.out.print("|                Available Rooms                 |");
+        if(type.equals("AC")) {
             showACRooms(cn);
         }else {
             showNonACRooms(cn);
         }
-        System.out.println("enter room no for book a room : ");
+        System.out.print("enter room no for book a room : ");
         int room_id = sc.nextInt();
         int hourRate = getCharge(cn,room_id);
-        System.out.println("how many hours you book a room : ");
+        System.out.print("how many hours customer book a room : ");
         int stayHours = sc.nextInt();
-        System.out.println("your total amount is = "+hourRate * stayHours);
+        System.out.println("total amount room rent = "+hourRate * stayHours);
         System.out.println("payment Done............\nThank You !");
         String q3 = "insert into users(room_id,cust_name) values(?,?)";
         try {
@@ -87,16 +124,18 @@ public class hotel_code {
     }
     public static void showACRooms(Connection cn) {
         System.out.println();
-        System.out.println();
-        String q1 = "select room_id from rooms where availability = true ";
+        System.out.println("            Ac Types Rooms");
+        String q1 = "select room_id,hour_rate from rooms where availability = true AND ACtype = 'AC'";
         try {
             PreparedStatement ps = cn.prepareStatement(q1);
             ResultSet rs = ps.executeQuery();
+            int c =0;
             while(rs.next()) {
-                    System.out.println("room NO = "+rs.getInt("room_id"));
-
+                    System.out.print("room NO = "+rs.getInt("room_id"));
+                    System.out.println("\t| Hour Rate = "+rs.getInt("hour_rate"));
+                    c++;
             }
-            if(!rs.next()) {
+            if(c == 0) {
                 System.out.println("all ac rooms are booked!!!!!!!!!!!!!\nplease go to non ac section...!");
             }
         }catch (SQLException w) {
@@ -106,18 +145,20 @@ public class hotel_code {
     }
     public static void showNonACRooms(Connection cn) {
         System.out.println();
-        System.out.println();
-        String q1 = "SELECT room_id FROM rooms WHERE availability = true AND ACtype = 'non AC' ";
+        System.out.println("            Non Ac Type Rooms");
+        String q1 = "SELECT room_id,hour_rate FROM rooms WHERE availability = true AND ACtype = 'non AC';";
         try {
             PreparedStatement ps = cn.prepareStatement(q1);
             ResultSet rs = ps.executeQuery();
+            int c = 0;
             while(rs.next()) {
-                System.out.println("room NO = "+rs.getInt("room_id"));
-
+                System.out.print("room NO = "+rs.getInt("room_id"));
+                System.out.println("\t| hour rate = "+rs.getInt("hour_rate"));
+                c++;
             }
-//            if(!rs.next()) {
-//                System.out.println("all ac rooms are booked!!!!!!!!!!!!!\nplease go to non ac section...!");
-//            }
+            if(c == 0) {
+                System.out.println("all non ac rooms are booked!!!!!!!!!!!!!\nplease go to  ac section...!");
+            }
         }catch (SQLException w) {
             System.out.println("error at show Rooms ........... !");
         }
@@ -138,7 +179,25 @@ public class hotel_code {
         return -1;
     }
     public static void returnRoom(Connection cn,Scanner sc){
-
+        System.out.println(" **** Welcome to return room section *****");
+        System.out.println();
+        System.out.print("enter room no of customer returnig room : ");
+        int returnRoomNo = sc.nextInt();
+       // System.out.println("just wait.......cheking customer pay all ammount of room rent..");
+        String q = "delete from users where room_id = ?";
+        try {
+            PreparedStatement ps = cn.prepareStatement(q);
+            ps.setInt(1,returnRoomNo);
+            int afr = ps.executeUpdate();
+            if(afr > 0) {
+                System.out.println("succesfully room returned.\nThank you visit again.");
+            }else {
+                System.out.println("This room not allcate to anyone...you give information wrong....!");
+            }
+        }catch (SQLException e) {
+            System.out.println("erorr at returning room..........1");
+        }
     }
+
 
 }
